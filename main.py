@@ -40,6 +40,10 @@ def main():
     with open("symptoms.p", 'rb') as filehandler:
         symptoms = pickle.load(filehandler)
 
+    #
+    # Creating a list with all the symptoms and diseases
+    #
+
     # disease_list = []
     # symptoms_list = []
     # print(df.shape)
@@ -51,11 +55,12 @@ def main():
     # symptoms_list = list(set(symptoms_list))
     # symptoms_list[0] = 'Disease'
     #
+
+
     df_ohe = pd.DataFrame(np.zeros((4920, 132)))
     df_ohe = df_ohe.set_axis(symptoms, axis=1, inplace=False)
     df_ohe.insert(0, 'Disease', df['Disease'])
     # df_ohe['Disease'] = df['Disease'].factorize()[0]
-
 
     #
     # # Dataset encoding
@@ -87,7 +92,6 @@ def main():
     pickle.dump(dt, open(filename, 'wb'))
     y_prob = dt.score(x_test, y_test)
     print("Score = {:.3%}".format(y_prob))
-
 
     clf = DecisionTreeClassifier(random_state=42)
     scores = cross_val_score(clf, df_ohe.iloc[:, 1:], df['Disease'], cv=CV)
@@ -143,7 +147,8 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
+
+    main()
     filename1 = "lr_model.sav"
     filename2 = "dt_model.sav"
     filename3 = "sgd_model.sav"
@@ -154,11 +159,7 @@ if __name__ == '__main__':
     print("Loading Model 1")
     loaded_model1 = pickle.load(open(filename1, 'rb'))
     x = loaded_model1.predict(vect.reshape(1, -1))
-    y = loaded_model1.predict_proba(vect.reshape(1, -1))[:, 1]
     print(x)
-    print(y)
-    print(loaded_model1.coef_)
-
 
     print("------------------")
 
