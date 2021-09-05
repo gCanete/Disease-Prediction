@@ -11,18 +11,16 @@ root = ThemedTk()
 root.title("Disease Prediction")
 root.geometry("550x150")
 root.resizable(False, False)
-# s = ttk.Style(root)
-# s.theme_names()
-# s.theme_use('yaru')
 root.set_theme('clearlooks')
 
 vect = []
-filename1 = "lr_model.sav"
-filename2 = "dt_model.sav"
-filename3 = "sgd_model.sav"
-filename4 = "rf_model.sav"
+filename1 = "Models/lr_model.sav"
+filename2 = "Models/dt_model.sav"
+filename3 = "Models/sgd_model.sav"
+filename4 = "Models/rf_model.sav"
+file_symp = "Models/symptoms.p"
 
-loaded_model1 = pickle.load(open(filename1, 'rb'))
+loaded_model = pickle.load(open(filename1, 'rb'))
 
 
 # Change the label text
@@ -33,7 +31,7 @@ def add(self):
 
 def predict():
     symptoms = encoder(vect)
-    x = loaded_model1.predict(symptoms.reshape(1, -1))
+    x = loaded_model.predict(symptoms.reshape(1, -1))
     label2.config(text=x)
 
 
@@ -43,7 +41,7 @@ def clear():
 
 
 def encoder(lista):
-    with open("symptoms.p", 'rb') as filehandler:
+    with open(file_symp, 'rb') as filehandler:
         sym = pickle.load(filehandler)
 
     sym.remove(sym[0])
@@ -56,7 +54,7 @@ def encoder(lista):
 
 
 # Dropdown menu options
-with open("symptoms.p", 'rb') as filehandler:
+with open(file_symp, 'rb') as filehandler:
         options = pickle.load(filehandler)
 
 # datatype of menu text

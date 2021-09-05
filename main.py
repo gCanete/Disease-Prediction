@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,14 +16,27 @@ DATA_SEV = "symptom-severity.csv"
 DATASET = pd.read_csv(PATH + DATA_DISEASE)
 SEVERITY = pd.read_csv(PATH + DATA_SEV)
 df = DATASET.copy()
-# symptoms = df.iloc[:, 1:18].values.flatten()
-# symptoms = list(set(symptoms))
-# with open("symptoms.p", 'wb') as filehandler:
-#     pickle.dump(symptoms, filehandler)
+
+filename1 = "Models/lr_model.sav"
+filename2 = "Models/dt_model.sav"
+filename3 = "Models/sgd_model.sav"
+filename4 = "Models/rf_model.sav"
+file_symp = "Models/symptoms.p"
+
+os.makedirs("Models/", exist_ok=True)
+
+if os.path.exists(file_symp):
+    print("Symptoms existe")
+else:
+    symptoms = df.iloc[:, 1:18].values.flatten().astype(str)
+    symptoms = list(set(symptoms))
+    symptoms.sort()
+    with open(file_symp, 'wb') as filehandler:
+        pickle.dump(symptoms, filehandler)
 
 
 def encoder(lista):
-    with open("symptoms.p", 'rb') as filehandler:
+    with open(file_symp, 'rb') as filehandler:
         sym = pickle.load(filehandler)
 
     sym.remove(sym[0])
@@ -34,33 +49,15 @@ def encoder(lista):
 
 
 def main():
+
     df = DATASET.copy()
-    df_sev = SEVERITY.copy()
 
     with open("symptoms.p", 'rb') as filehandler:
         symptoms = pickle.load(filehandler)
 
-    #
-    # Creating a list with all the symptoms and diseases
-    #
-
-    # disease_list = []
-    # symptoms_list = []
-    # print(df.shape)
-    #
-    # disease_list = df['Disease']
-    # disease_list = list(set(disease_list))
-    #
-    # symptoms_list = df.iloc[:, 1:18].values.flatten()
-    # symptoms_list = list(set(symptoms_list))
-    # symptoms_list[0] = 'Disease'
-    #
-
-
     df_ohe = pd.DataFrame(np.zeros((4920, 132)))
     df_ohe = df_ohe.set_axis(symptoms, axis=1, inplace=False)
     df_ohe.insert(0, 'Disease', df['Disease'])
-    # df_ohe['Disease'] = df['Disease'].factorize()[0]
 
     #
     # # Dataset encoding
@@ -70,7 +67,6 @@ def main():
             if df.iloc[y, x] in symptoms:
                 df_ohe.loc[y, df.iloc[y, x]] = 1
 
-    # df_ohe.drop([0], axis=1)
     df_ohe.to_pickle("encoded_df.pkl")
 
     df_ohe = pd.read_pickle("encoded_df.pkl")
@@ -83,65 +79,60 @@ def main():
     CV = 10
 
     print("Decision Tree")
-    parameters = {'criterion': ('gini', 'entropy')}
-    dt = DecisionTreeClassifier(random_state=42)
-    # clf = GridSearchCV(dt, parameters)
 
-    dt.fit(x_train, y_train)
-    filename = "dt_model.sav"
-    pickle.dump(dt, open(filename, 'wb'))
-    y_prob = dt.score(x_test, y_test)
-    print("Score = {:.3%}".format(y_prob))
+    if os.path.exists(filename2):
+        print("El modelo DT existe")
 
-    clf = DecisionTreeClassifier(random_state=42)
-    scores = cross_val_score(clf, df_ohe.iloc[:, 1:], df['Disease'], cv=CV)
-    print(scores)
+    else:
+        parameters = {'criterion': ('gini', 'entropy')}
+        dt = DecisionTreeClassifier(random_state=42)
+        clf = GridSearchCV(dt, parameters)
+
+        clf.fit(x_train, y_train)
+        pickle.dump(clf, open(filename2, 'wb'))
+
 
     print("SGDC")
-    # parameters = {'loss': ( 'hinge', 'log', 'modified_huber', 'squared_hinge', 'perceptron'),'penalty': ('l2', 'l1', 'elasticnet'),
-    #               'alpha': [0.0001, 0.001, 0.01], 'epsilon': [0.1, 0.01, 0.001]}
 
-    parameters = {'alpha': [0.01], 'epsilon': [0.1], 'loss': 'log', 'penalty': 'l2'}
-    sgd = SGDClassifier(random_state=42, n_jobs=-1, alpha=0.01, epsilon=0.1, loss='log', penalty='l2')
-    # clf = GridSearchCV(sgd, parameters)
-    sgd.fit(x_train, y_train)
-    filename = "sgd_model.sav"
-    pickle.dump(sgd, open(filename, 'wb'))
-    y_prob = sgd.score(x_test, y_test)
-    print("Score = {:.3%}".format(y_prob))
-    # print(clf.best_params_)
+    if os.path.exists(filename3):
+        print("El modelo SGD existe")
 
-    sgd = SGDClassifier(random_state=42, n_jobs=-1, alpha=0.01, epsilon=0.1, loss='log', penalty='l2')
-    scores = cross_val_score(clf, df_ohe.iloc[:, 1:], df['Disease'], cv=CV)
-    print(scores)
+    else:
+        parameters = {'loss': ('hinge', 'log', 'modified_huber', 'squared_hinge', 'perceptron'),'penalty': ('l2', 'l1', 'elasticnet'),
+                      'alpha': [0.0001, 0.001, 0.01], 'epsilon': [0.1, 0.01, 0.001]}
 
+        sgd = SGDClassifier(random_state=42)
+        clf = GridSearchCV(sgd, parameters)
+        clf.fit(x_train, y_train)
+        pickle.dump(clf, open(filename3, 'wb'))
+        y_prob = clf.score(x_test, y_test)
+        print("Score = {:.3%}".format(y_prob))
 
     print("Random Forest")
-    clf = RandomForestClassifier(random_state=42, n_jobs=-1)
-    clf.fit(x_train, y_train)
-    filename = "rf_model.sav"
-    pickle.dump(clf, open(filename, 'wb'))
-    y_prob = clf.score(x_test, y_test)
-    print("Score = {:.3%}".format(y_prob))
 
-    # clf = RandomForestClassifier(random_state=42, n_jobs=-1)
-    # scores = cross_val_score(clf, df.iloc[:, 1:18], df['Disease'], cv=CV)
-    # print(scores)
+    if os.path.exists(filename4):
+        print("El modelo RF existe")
+
+    else:
+        clf = RandomForestClassifier(random_state=42, n_jobs=-1)
+        clf.fit(x_train, y_train)
+        pickle.dump(clf, open(filename4, 'wb'))
+        y_prob = clf.score(x_test, y_test)
+        print("Score = {:.3%}".format(y_prob))
 
     print("Logistic Regression")
-    parameters = {'penalty': ('l2', 'l1', 'elasticnet'), 'verbose': [1, 2, 10]}
-    lr = LogisticRegression(max_iter=100, n_jobs=-1, penalty='l2', verbose=1)
-    # clf = GridSearchCV(lr, parameters)
-    lr.fit(x_train, y_train)
-    filename = "lr_model.sav"
-    pickle.dump(lr, open(filename, 'wb'))
-    y_prob = lr.score(x_test, y_test)
-    print("Score = {:.3%}".format(y_prob))
-    mu_prob = lr.predict_proba(x_test[:100])
 
-    # lr = LogisticRegression(max_iter=100, n_jobs=-1, penalty='l2', verbose=1)
-    # scores = cross_val_score(lr, df.iloc[:, 1:18], df['Disease'], cv=CV)
-    # print(scores)
+    if os.path.exists(filename1):
+        print("El modelo LR existe")
+
+    else:
+        parameters = {'penalty': ('l2', 'l1', 'elasticnet'), 'verbose': [1, 2, 10]}
+        lr = LogisticRegression(max_iter=100, n_jobs=-1, penalty='l2', verbose=1)
+        clf = GridSearchCV(lr, parameters)
+        clf.fit(x_train, y_train)
+        pickle.dump(clf, open(filename1, 'wb'))
+        y_prob = clf.score(x_test, y_test)
+        print("Score = {:.3%}".format(y_prob))
 
     print("Final")
 
@@ -149,10 +140,6 @@ def main():
 if __name__ == '__main__':
 
     main()
-    filename1 = "lr_model.sav"
-    filename2 = "dt_model.sav"
-    filename3 = "sgd_model.sav"
-    filename4 = "rf_model.sav"
 
     vect = encoder([' cough'])
 
