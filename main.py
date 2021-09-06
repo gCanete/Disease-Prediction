@@ -67,9 +67,6 @@ def main():
             if df.iloc[y, x] in symptoms:
                 df_ohe.loc[y, df.iloc[y, x]] = 1
 
-    df_ohe.to_pickle("encoded_df.pkl")
-
-    df_ohe = pd.read_pickle("encoded_df.pkl")
 
     x_train, x_test, y_train, y_test = train_test_split(df_ohe.iloc[:, 2:], df_ohe['Disease'], test_size=0.4,
                                                               random_state=1000)
