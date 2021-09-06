@@ -52,7 +52,7 @@ def main():
 
     df = DATASET.copy()
 
-    with open("symptoms.p", 'rb') as filehandler:
+    with open(file_symp, 'rb') as filehandler:
         symptoms = pickle.load(filehandler)
 
     df_ohe = pd.DataFrame(np.zeros((4920, 132)))
